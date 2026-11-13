@@ -26,14 +26,14 @@
                      "long-context"
                  ],
     "license":  "MIT",
-    "author":  "TwiObliv0vx1NG",
+    "author":  "TwiObliv0vx",
     "repository":  {
                        "type":  "git",
-                       "url":  "git+https://github.com/TwiObliv0vx1NG/dsh-enough.git"
+                       "url":  "git+https://github.com/TwiObliv0vx/dsh-enough.git"
                    },
-    "homepage":  "https://github.com/TwiObliv0vx1NG/dsh-enough#readme",
+    "homepage":  "https://github.com/TwiObliv0vx/dsh-enough#readme",
     "bugs":  {
-                 "url":  "https://github.com/TwiObliv0vx1NG/dsh-enough/issues"
+                 "url":  "https://github.com/TwiObliv0vx/dsh-enough/issues"
              },
     "engines":  {
                     "node":  "\u003e=20"

@@ -28,7 +28,7 @@
 暂未发布到 npm，从 GitHub 安装：
 
 ```bash
-git clone https://github.com/TwiObliv0vx1NG/dsh-enough.git ~/.dsh/plugins/dsh-enough
+git clone https://github.com/TwiObliv0vx/dsh-enough.git ~/.dsh/plugins/dsh-enough
 dsh plugin add "link:C:/Users/<you>/.dsh/plugins/dsh-enough"
 ```
 

@@ -2,17 +2,12 @@
 #
 # Default install = COEXIST mode: the plugin only registers the
 # `context_index` / `enough_status` tools and the `/enough` command. It does
-# NOT touch the compaction backend, so it can sit next to billion-context.
+# NOT touch the compaction backend, so it can sit next to any other compressor.
 #
 # Switch to TAKEOVER mode at runtime with `/enough mode takeover`; that swaps
-# the live compaction engine's summarizer for the handoff summarizer without
-# restarting anything. To make takeover persist across restarts, add this row
-# to the same patch (see README "Takeover"):
-#
-#   - id: compaction-basic
-#     config:
-#       thresholdRatio: 0.55
-#       retainRatio: 0.12
+# the live compaction engine's summarizer for the handoff summarizer with no
+# restart. Takeover is runtime-only on purpose: the engine config is frozen at
+# startup, so this patch deliberately pins no engine limits.
 - insert:
     - id: enough
       name: dsh-enough

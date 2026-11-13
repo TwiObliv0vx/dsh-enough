@@ -38,6 +38,7 @@ const routes = []
 let originalSumm = null
 const engine = {
   constructor: { name: 'BasicCompactionEngine' },
+  config: { thresholdRatio: 0.8, retainRatio: 0.16 },
   summarize(input, agent, signal) {
     return 'original-summary'
   },
@@ -89,6 +90,7 @@ check('index tool exists', () => assert.ok(indexTool))
 const status = await statusTool.execute({}, {})
 check('status mode coexist', () => assert.equal(status.mode, 'coexist'))
 check('status handoff off', () => assert.equal(status.handoffInstalled, false))
+check('status reads engine limits', () => assert.equal(status.engineThresholdRatio, 0.8))
 check('status schema keys present', () => {
   for (const key of statusTool.output.schema.required) assert.ok(key in status, `missing ${key}`)
 })
@@ -199,7 +201,7 @@ const summary = await summarizeEnough(
 check('summary shape', () => assert.ok(Array.isArray(summary.summary) && summary.summary[0].type === 'text'))
 check('summary text', () => assert.ok(summary.summary[0].text.includes('原始任务')))
 
-// engine-absent profile (e.g. billion-context disabled compaction-basic):
+// engine-absent profile (another plugin disabled or replaced compaction-basic):
 // takeover must be refused AND must not be persisted.
 {
   const tools2 = []

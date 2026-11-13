@@ -1,6 +1,6 @@
 {
   "name": "dsh-enough",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "You don't need long context — automatic conversation handoff, selective long-input reading, and optional single-action compaction for DeepSeek Harness.",
   "type": "module",
   "main": "./lib/index.js",
@@ -26,6 +26,15 @@
     "long-context"
   ],
   "license": "MIT",
+  "author": "TwiObliv0vx1NG",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TwiObliv0vx1NG/dsh-enough.git"
+  },
+  "homepage": "https://github.com/TwiObliv0vx1NG/dsh-enough#readme",
+  "bugs": {
+    "url": "https://github.com/TwiObliv0vx1NG/dsh-enough/issues"
+  },
   "engines": {
     "node": ">=20"
   },

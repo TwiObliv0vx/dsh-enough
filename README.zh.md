@@ -54,11 +54,11 @@ dsh plugin add "link:C:/Users/<you>/.dsh/plugins/dsh-enough"
 
 ### 设置页
 
-设置 → 够用：模式、SAC、摘要上限、索引阈值，以及只读的压缩阈值与引擎状态。
+设置 → 够用：模式、SAC、摘要上限、索引阈值，以及只读的引擎参数（取自压缩引擎）与引擎状态。
 
-## 与 billion-context 共存
+## 与别的压缩器共存
 
-默认 `coexist` 模式不碰压缩后端，billion-context 可以继续工作。想用 dsh-enough 的交接简报接管压缩：
+默认 `coexist` 模式不碰压缩后端，profile 里已有的压缩器可以继续工作。想用 dsh-enough 的交接简报接管压缩：
 
 ```
 /enough mode takeover
@@ -71,8 +71,8 @@ dsh plugin add "link:C:/Users/<you>/.dsh/plugins/dsh-enough"
 ```yaml
 - id: compaction-basic
   config:
-    thresholdRatio: 0.55
-    retainRatio: 0.12
+    thresholdRatio: 0.8
+    retainRatio: 0.16
 ```
 
 ## 配置
@@ -83,22 +83,20 @@ dsh plugin add "link:C:/Users/<you>/.dsh/plugins/dsh-enough"
 {
   "mode": "coexist",
   "sac": false,
-  "thresholdRatio": 0.55,
-  "retainRatio": 0.12,
   "summaryMaxTokens": 8000,
   "indexMinBytes": 24000,
   "indexMaxFiles": 200
 }
 ```
 
-设置页与 `/enough` 写的是同一份文件。
+设置页与 `/enough` 写的是同一份文件。引擎参数不写在这里——它们属于压缩引擎。
 
 ## 限制
 
 - 交接简报的质量取决于摘要模型；`summaryMaxTokens` 给太小会丢细节（默认 8000）。
 - `takeover` 只换摘要器，不改变压缩事务本身（替换哪些消息、事务原子性仍由 DSH compaction 负责）。
 - SAC 每轮空闲压一次，短对话上收益为负，默认关。
-- 设置页的阈值只读：`compaction-basic` 的配置在启动时冻结。
+- 设置页的引擎参数只读，且取自压缩引擎：它的配置在启动时冻结，dsh-enough 从不持久化或改写它；要改请配置 profile 里的 `@deepseek-ai/dsh-compaction-basic`。
 
 ## 开发
 

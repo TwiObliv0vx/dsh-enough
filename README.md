@@ -54,11 +54,11 @@ The desktop profile is managed by Electron and rejects `dsh plugin`; edit `~/.ds
 
 ### Settings
 
-Settings → 够用 (dsh-enough): mode, SAC, summary cap, index thresholds, plus read-only compaction threshold and engine status.
+Settings → 够用 (dsh-enough): mode, SAC, summary cap, index thresholds, plus engine limits (read-only, sourced from the compaction engine) and engine status.
 
-## Coexisting with billion-context
+## Coexisting with another compressor
 
-`coexist` (default) leaves the compaction backend alone, so billion-context keeps working. To let dsh-enough's handoff brief take over:
+`coexist` (default) leaves the compaction backend alone, so whatever compressor your profile already runs keeps working. To let dsh-enough's handoff brief take over:
 
 ```
 /enough mode takeover
@@ -71,8 +71,8 @@ Switch back with `/enough mode coexist`. Neither needs a restart.
 ```yaml
 - id: compaction-basic
   config:
-    thresholdRatio: 0.55
-    retainRatio: 0.12
+    thresholdRatio: 0.8
+    retainRatio: 0.16
 ```
 
 ## Configuration
@@ -83,27 +83,25 @@ Switch back with `/enough mode coexist`. Neither needs a restart.
 {
   "mode": "coexist",
   "sac": false,
-  "thresholdRatio": 0.55,
-  "retainRatio": 0.12,
   "summaryMaxTokens": 8000,
   "indexMinBytes": 24000,
   "indexMaxFiles": 200
 }
 ```
 
-The settings page and `/enough` write the same file.
+The settings page and `/enough` write the same file. Engine limits are never stored here — they belong to the compaction engine.
 
 ## Limitations
 
 - Handoff quality depends on the summarization model; too small a `summaryMaxTokens` loses detail (default 8000).
 - `takeover` swaps only the summarizer; the compaction transaction itself (which messages are replaced, atomicity) stays with DSH compaction.
 - SAC compacts on every idle turn and is negative-value on short conversations — off by default.
-- The threshold on the settings page is read-only: `compaction-basic` config is frozen at startup.
+- The engine limits on the settings page are read-only and sourced from the compaction engine: its config is frozen at startup. dsh-enough never persists or applies them — configure `@deepseek-ai/dsh-compaction-basic` in the profile patch instead.
 
 ## Development
 
 ```bash
-node test/smoke.mjs   # 40 assertions, no DSH runtime required
+node test/smoke.mjs   # smoke assertions, no DSH runtime required
 ```
 
 ## License

@@ -1,5 +1,5 @@
-/**
- * dsh-enough smoke test — no DSH runtime required.
+﻿/**
+ * dsh-enough smoke test 鈥?no DSH runtime required.
  *
  * Mocks the Cordis context surface the plugin touches, then exercises:
  * tool registration + execution, the `/enough` command, coexist/takeover
@@ -69,7 +69,7 @@ const ctx = {
   webServer: { register: (route) => (routes.push(route), () => {}) },
   llm: {
     async *stream() {
-      yield { type: 'text-delta', index: 0, text: '## 原始任务\n测试任务' }
+      yield { type: 'text-delta', index: 0, text: '## 鍘熷浠诲姟\n娴嬭瘯浠诲姟' }
       yield { type: 'finish', reason: { kind: 'stop' } }
     },
   },
@@ -90,7 +90,7 @@ check('index tool exists', () => assert.ok(indexTool))
 const status = await statusTool.execute({}, {})
 check('status mode coexist', () => assert.equal(status.mode, 'coexist'))
 check('status handoff off', () => assert.equal(status.handoffInstalled, false))
-check('status reads engine limits', () => assert.equal(status.engineThresholdRatio, 0.8))
+check('status reads engine limits', () => assert.equal(status.engineLimits, '0.8 / 0.16'))
 check('status schema keys present', () => {
   for (const key of statusTool.output.schema.required) assert.ok(key in status, `missing ${key}`)
 })
@@ -199,7 +199,7 @@ const summary = await summarizeEnough(
   undefined,
 )
 check('summary shape', () => assert.ok(Array.isArray(summary.summary) && summary.summary[0].type === 'text'))
-check('summary text', () => assert.ok(summary.summary[0].text.includes('原始任务')))
+check('summary text', () => assert.ok(summary.summary[0].text.includes('鍘熷浠诲姟')))
 
 // engine-absent profile (another plugin disabled or replaced compaction-basic):
 // takeover must be refused AND must not be persisted.
@@ -239,7 +239,7 @@ rmSync(home, { recursive: true, force: true })
 
 const failed = results.filter(([s]) => s === 'FAIL')
 for (const [status, name, detail] of results) {
-  console.log(`${status}  ${name}${detail ? ` — ${detail}` : ''}`)
+  console.log(`${status}  ${name}${detail ? ` 鈥?${detail}` : ''}`)
 }
 console.log(`\n${results.length - failed.length}/${results.length} passed`)
 process.exit(failed.length === 0 ? 0 : 1)

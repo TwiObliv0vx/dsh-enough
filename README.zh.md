@@ -57,22 +57,29 @@ dsh plugin add "link:C:/Users/<you>/.dsh/plugins/dsh-enough"
 
 ## 与别的压缩器共存
 
-默认 `coexist` 模式不碰压缩后端，profile 里已有的压缩器可以继续工作。想用 dsh-enough 的交接简报接管压缩：
+默认 `coexist` 模式不碰压缩后端，profile 里已有的压缩器可以继续工作。
+
+### 预设层接管（当前 DSH 版本唯一有效的方式）
+
+这个版本的 DSH 把压缩引擎挂在 **agent preset 的隔离组**里（`isolate: { compaction: true }`），
+Host 层 `ctx.get('compaction')` 拿到的是 null —— 所以 `/enough mode takeover` 在这类部署里会报
+「压缩服务未注册」。
+
+`presetHandoff: true`（默认开）时，插件监听全局 `internal/config` 事件，在任何直接挂载
+`@deepseek-ai/dsh-compaction-basic` 的隔离组里：把 `compactThresholdRatio` 写进引擎配置，
+并在同一组追加一行 `enough-handoff`，由它替换摘要器。只改隔离组，Host 层压缩行不动，
+不会重复接管。生效范围是**之后新建的会话**（已有会话保留它启动时的预设版本）。
+
+### 旧式的 Host 层接管
+
+引擎确实挂在 Host 层的部署里仍可用：
 
 ```
 /enough mode takeover
 ```
 
-切回：`/enough mode coexist`。两者都无需重启。
-
-> 注意：`takeover` 替换的是**摘要怎么写**；压缩**什么时候触发**仍由 `@deepseek-ai/dsh-compaction-basic` 的 `thresholdRatio` 决定（启动时冻结）。要改触发阈值，在 profile 的 `cordis.patch.yml` 里给 `compaction-basic` 配：
-
-```yaml
-- id: compaction-basic
-  config:
-    thresholdRatio: 0.8
-    retainRatio: 0.16
-```
+切回：`/enough mode coexist`。两者都无需重启。它替换的是摘要怎么写；压缩什么时候触发由引擎的
+`thresholdRatio` 决定，要提前就用上面的 `compactThresholdRatio`。
 
 ## 配置
 
@@ -82,25 +89,33 @@ dsh plugin add "link:C:/Users/<you>/.dsh/plugins/dsh-enough"
 {
   "mode": "coexist",
   "sac": false,
+  "presetHandoff": true,
+  "compactThresholdRatio": 0.72,
   "summaryMaxTokens": 8000,
   "indexMinBytes": 24000,
   "indexMaxFiles": 200
 }
 ```
 
-设置页与 `/enough` 写的是同一份文件。引擎参数不写在这里——它们属于压缩引擎。
+- `compactThresholdRatio`：写进预设压缩引擎的触发比例（`0.1`–`0.99`），`0` 表示不改动引擎自己的值。
+  大窗口下配 0.7 左右比较稳，别指望引擎精确估算中文 token。
+- `handoffSpec`：可覆盖插进预设那一行的模块 spec（默认是本包的 `file://` 地址），只在排查挂载问题时才需要。
 
 ## 限制
 
 - 交接简报的质量取决于摘要模型；`summaryMaxTokens` 给太小会丢细节（默认 8000）。
 - `takeover` 只换摘要器，不改变压缩事务本身（替换哪些消息、事务原子性仍由 DSH compaction 负责）。
 - SAC 每轮空闲压一次，短对话上收益为负，默认关。
-- 设置页的引擎参数只读，且取自压缩引擎：它的配置在启动时冻结，dsh-enough 从不持久化或改写它；要改请配置 profile 里的 `@deepseek-ai/dsh-compaction-basic`。
+- 设置页的引擎参数只读，且取自压缩引擎：它的配置在启动时冻结，dsh-enough 不改运行中的引擎；
+  `compactThresholdRatio` 是写进「预设将要挂载的那份配置」，不是运行时改内存。
+- 预设层接管依赖 DSH 的内部事件 `internal/config`。版本变化后如果这个事件改名，钩子会静默退回
+  并存模式，`enough_status` 的 `preset hook:` 一行会显示 `off` 或错误原因。
 
 ## 开发
 
 ```bash
-node test/smoke.mjs   # 40 项断言，无 DSH 运行时依赖
+node test/smoke.mjs   # 44 项断言，无 DSH 运行时依赖
+node test/hook.mjs    # 20 项断言：预设改写与摘要器安装
 ```
 
 ## License

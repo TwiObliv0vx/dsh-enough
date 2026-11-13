@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 — 2026-11-14
+
+- feat(preset hook): 当前 DSH 把压缩引擎放在 agent preset 的隔离组里（`isolate: { compaction: true }`），Host 层 `ctx.get('compaction')` 是 null，`takeover` 因此一直装不上。新增 `lib/preset-hook.js`：监听全局 `internal/config`，把 `compactThresholdRatio` 写进预设的 `compaction-basic` 配置，并在同一组追加 `enough-handoff` 行。
+- feat(preset handoff): 新增 `lib/preset-handoff.js`，在预设域内替换引擎的 `summarize()`；幂等，原方法保留在引擎上。
+- feat(config): 新增 `presetHandoff`（默认 true）、`compactThresholdRatio`（0 = 不动引擎自己的阈值）、`handoffSpec`（覆盖插入行的模块 spec）。
+- feat(status): `enough_status` 与 `/enough` 增加 `preset hook` 行（安装状态、改写计数、实际写入的阈值）。
+- test: 新增 `test/hook.mjs`（20 项断言），`test/smoke.mjs` 44 项全过。
+- 说明：只改隔离组内的压缩行，Host 层压缩行不动，不会重复接管；`internal/config` 是 DSH 的内部事件，失效时静默退回 coexist 并在状态里可见。
+
 ## 0.1.2 — 2026-11-14
 
 - fix(status): report compaction-engine limits as one string (engineLimits), so the tool result is lossless JSON. Numeric fields that could be undefined were rejected by the harness before rendering.

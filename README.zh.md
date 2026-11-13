@@ -25,11 +25,10 @@
 
 ## 安装
 
-```bash
-# 从 npm（发布后）
-dsh plugin add dsh-enough
+暂未发布到 npm，从 GitHub 安装：
 
-# 本地开发：junction + link 安装（Windows 路径不要带空格）
+```bash
+git clone https://github.com/TwiObliv0vx1NG/dsh-enough.git ~/.dsh/plugins/dsh-enough
 dsh plugin add "link:C:/Users/<you>/.dsh/plugins/dsh-enough"
 ```
 

@@ -25,11 +25,10 @@ What is actually expensive is re-reading the entire history on every turn. dsh-e
 
 ## Install
 
-```bash
-# npm (once published)
-dsh plugin add dsh-enough
+Not on npm yet — install from GitHub:
 
-# local development: junction + link install (Windows paths must not contain spaces)
+```bash
+git clone https://github.com/TwiObliv0vx1NG/dsh-enough.git ~/.dsh/plugins/dsh-enough
 dsh plugin add "link:C:/Users/<you>/.dsh/plugins/dsh-enough"
 ```
 

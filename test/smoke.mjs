@@ -199,6 +199,37 @@ const summary = await summarizeEnough(
 check('summary shape', () => assert.ok(Array.isArray(summary.summary) && summary.summary[0].type === 'text'))
 check('summary text', () => assert.ok(summary.summary[0].text.includes('原始任务')))
 
+// engine-absent profile (e.g. billion-context disabled compaction-basic):
+// takeover must be refused AND must not be persisted.
+{
+  const tools2 = []
+  const commands2 = []
+  const ctx2 = {
+    get: () => undefined,
+    tools: { register: (t) => tools2.push(t) },
+    commands: { register: (c) => (commands2.push(c), () => {}) },
+    effect(fn) {
+      const out = fn()
+      if (out && typeof out.next === 'function') {
+        let s = out.next()
+        while (!s.done) s = out.next()
+      }
+      return typeof out === 'function' ? out : () => {}
+    },
+    on() {},
+    logger: { info() {}, warn() {} },
+    webServer: { register: () => () => {} },
+    llm: { async *stream() {} },
+  }
+  apply(ctx2, { mode: 'coexist' })
+  const run2 = (raw) => commands2[0].handler({ rawInput: raw })
+  const res2 = await run2('mode takeover')
+  check('takeover refused without engine', () => assert.equal(res2.kind, 'error'))
+  check('refused takeover not persisted', () => assert.equal(loadConfig().mode, 'coexist'))
+  const st3 = await tools2.find((t) => t.name === 'enough_status').execute({}, {})
+  check('status reports engine absent', () => assert.equal(st3.engine, 'absent'))
+}
+
 // restore engine for cleanliness
 engine.summarize = originalSumm
 

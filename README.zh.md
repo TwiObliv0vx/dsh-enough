@@ -62,24 +62,26 @@ dsh plugin add "link:C:/Users/<you>/.dsh/plugins/dsh-enough"
 ### 预设层接管（当前 DSH 版本唯一有效的方式）
 
 这个版本的 DSH 把压缩引擎挂在 **agent preset 的隔离组**里（`isolate: { compaction: true }`），
-Host 层 `ctx.get('compaction')` 拿到的是 null —— 所以 `/enough mode takeover` 在这类部署里会报
-「压缩服务未注册」。
+Host 层 `ctx.get('compaction')` 拿到的是 null。
 
-`presetHandoff: true`（默认开）时，插件监听全局 `internal/config` 事件，在任何直接挂载
-`@deepseek-ai/dsh-compaction-basic` 的隔离组里：把 `compactThresholdRatio` 写进引擎配置，
-并在同一组追加一行 `enough-handoff`，由它替换摘要器。只改隔离组，Host 层压缩行不动，
-不会重复接管。生效范围是**之后新建的会话**（已有会话保留它启动时的预设版本）。
+插件监听全局 `internal/config` 事件：在任何直接挂载 `@deepseek-ai/dsh-compaction-basic` 的隔离组里，
+把 `compactThresholdRatio` 写进引擎配置，并在同一组追加一行 `enough-handoff`。只改隔离组，
+Host 层压缩行不动，不会重复接管。
+
+**装在哪里很关键**：预设 revision 是注册即激活的，钩子必须在所有预设之前注册。所以
+`dsh-enough` 在 profile 的 `dsh.profile.bundles` 里要排在 `@deepseek-ai/dsh-web-app` **前面**
+（本机排在 `@deepseek-ai/dsh-base` 之后）。插件也不注入 `webServer`，设置页路由用
+`ctx.inject(['webServer'])` 延迟挂载，否则 `apply()` 会被拖到 web 包之后才跑、一个预设都赶不上。
+改动 bundles 顺序后需要重启 DSH。
+
+**两种摘要在运行时切换**：行一旦插进去就长期留在预设里；`presetHandoff` 是每次压缩时读取的开关，
+`/enough mode takeover` 用交接简报、`/enough mode coexist` 用引擎自己的摘要。切换不重启、
+不重开会话，下一次压缩就生效。行本身随新会话生效（已有会话保留它启动时的预设版本）。
 
 ### 旧式的 Host 层接管
 
-引擎确实挂在 Host 层的部署里仍可用：
-
-```
-/enough mode takeover
-```
-
-切回：`/enough mode coexist`。两者都无需重启。它替换的是摘要怎么写；压缩什么时候触发由引擎的
-`thresholdRatio` 决定，要提前就用上面的 `compactThresholdRatio`。
+引擎确实挂在 Host 层的部署里时，`/enough mode takeover` 还会顺手替换那里的摘要器；引擎不存在就跳过，
+不影响预设层那条路。压缩什么时候触发由引擎的 `thresholdRatio` 决定，要提前就用上面的 `compactThresholdRatio`。
 
 ## 配置
 

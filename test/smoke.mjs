@@ -1,4 +1,4 @@
-﻿/**
+/**
  * dsh-enough smoke test 鈥?no DSH runtime required.
  *
  * Mocks the Cordis context surface the plugin touches, then exercises:
@@ -51,6 +51,9 @@ originalSumm = engine.summarize
 const ctx = {
   get(name) {
     return name === 'compaction' ? engine : undefined
+  },
+  inject(deps, callback) {
+    return callback(this)
   },
   tools: { register: (tool) => tools.push(tool) },
   commands: { register: (cmd) => (commands.push(cmd), () => {}) },
@@ -177,6 +180,7 @@ check('POST saves mode', () => assert.equal(postBody.config.mode, 'takeover'))
 check('POST installed handoff', () => assert.equal(postBody.config.handoffInstalled, true))
 check('POST saves summaryMaxTokens', () => assert.equal(postBody.config.summaryMaxTokens, 2048))
 check('POST persisted to file', () => assert.equal(loadConfig().mode, 'takeover'))
+check('POST turns the runtime switch on', () => assert.equal(loadConfig().presetHandoff, true))
 
 const denyRes = makeRes()
 await routes[0].handler({ method: 'GET', socket: { remoteAddress: '10.0.0.9' } }, denyRes)
@@ -208,6 +212,9 @@ check('summary text', () => assert.ok(summary.summary[0].text.includes('鍘熷�
   const commands2 = []
   const ctx2 = {
     get: () => undefined,
+    inject(deps, callback) {
+      return callback(this)
+    },
     tools: { register: (t) => tools2.push(t) },
     commands: { register: (c) => (commands2.push(c), () => {}) },
     effect(fn) {
@@ -226,10 +233,13 @@ check('summary text', () => assert.ok(summary.summary[0].text.includes('鍘熷�
   apply(ctx2, { mode: 'coexist' })
   const run2 = (raw) => commands2[0].handler({ rawInput: raw })
   const res2 = await run2('mode takeover')
-  check('takeover refused without engine', () => assert.equal(res2.kind, 'error'))
-  check('refused takeover not persisted', () => assert.equal(loadConfig().mode, 'coexist'))
+  check('takeover works without a host engine', () => assert.equal(res2.kind, 'success'))
+  check('takeover persists the runtime switch', () => assert.equal(loadConfig().presetHandoff, true))
   const st3 = await tools2.find((t) => t.name === 'enough_status').execute({}, {})
   check('status reports engine absent', () => assert.equal(st3.engine, 'absent'))
+  check('status reports runtime handoff on', () => assert.equal(st3.presetHandoff, true))
+  await run2('mode coexist')
+  check('coexist clears the runtime switch', () => assert.equal(loadConfig().presetHandoff, false))
 }
 
 // restore engine for cleanliness

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1 — 2026-11-14
+
+- fix(load-order): 预设 revision 是注册即激活的，`dsh-enough` 原来排在 bundles 末尾又注入 `webServer`，`apply()` 被拖到所有预设之后，钩子一个预设都赶不上（重启后 `0/0 compositions patched`）。现在不再注入 `webServer`（设置页路由改用 `ctx.inject(['webServer'])` 延迟挂载），profile 里也把 `dsh-enough` 排到了 `@deepseek-ai/dsh-web-app` 之前。
+- feat(switch): 两种摘要改成运行时切换。`enough-handoff` 行总是插进预设，`presetHandoff` 每次压缩时读取，`/enough mode takeover|coexist`（以及设置页）即时生效——不重启、不重开会话，下一次压缩就走新路径。
+- fix(mode): Host 层引擎不存在时 `/enough mode takeover` 不再报错拒绝，改成照常记录并说明「就靠预设层那条路」；只有 `presetHandoff` 也关掉时才会告警。
+- feat(status): `enough_status` 增加 `presetHandoff` 字段，`preset hook:` 一行末尾显示当前是 handoff 还是原生摘要。
+- test: smoke 47 项、hook 20 项全过（新增「无 Host 引擎也能 takeover」「运行时开关持久化」「开关关闭时仍插入行」）。
+
 ## 0.2.0 — 2026-11-14
 
 - feat(preset hook): 当前 DSH 把压缩引擎放在 agent preset 的隔离组里（`isolate: { compaction: true }`），Host 层 `ctx.get('compaction')` 是 null，`takeover` 因此一直装不上。新增 `lib/preset-hook.js`：监听全局 `internal/config`，把 `compactThresholdRatio` 写进预设的 `compaction-basic` 配置，并在同一组追加 `enough-handoff` 行。

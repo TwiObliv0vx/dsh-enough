@@ -117,11 +117,13 @@ check('composition without an engine row is returned as-is', () => {
 check('missing plugins list is tolerated', () => {
   assert.deepEqual(fire({}), {})
 })
-check('presetHandoff false leaves everything alone', () => {
+check('the row is inserted even when the runtime switch is off', () => {
+  // presetHandoff is a runtime switch read by the installed wrapper, so the row
+  // must exist regardless; otherwise switching it on later would need new sessions.
   const saved = liveConfig
   liveConfig = { ...saved, presetHandoff: false }
-  const before = presetComposition()
-  assert.equal(fire(before), before)
+  const out = fire(presetComposition())
+  assert.ok(out.plugins[1].config.some((c) => c.id === 'enough-handoff'))
   liveConfig = saved
 })
 check('invalid ratio leaves the engine threshold alone but still installs', () => {
